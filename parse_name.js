@@ -1,0 +1,74 @@
+const csv = require('csv-parser');
+const fs = require('fs');
+
+function parsePersonName(name) {
+  if (!name) {
+    return null;
+  }
+
+  name = name.trim();
+  const parts = name.split(' ');
+
+  let title = null;
+  let first_name = null;
+  let initial = null;
+  let last_name = null;
+
+  if (["Mr", "Mrs", "Ms", "Miss", "Dr", "Mister", "Prof"].includes(parts[0])) {
+    title = parts[0];
+    parts.shift();
+  }
+
+  if (parts.length == 1) {
+    if (parts[0].length == 1) {
+      initial = parts[0];
+      last_name = parts[1];
+    } else {
+      first_name = parts[0];
+      last_name = parts[0];
+    }
+  } else if (parts.length == 2) {
+    first_name = parts[0];
+    last_name = parts[1];
+  } else if (parts.length == 3) {
+    first_name = parts[0];
+    initial = parts[1];
+    last_name = parts[2];
+  } else {
+    first_name = parts.slice(0, -1).join(' ');
+    last_name = parts[parts.length - 1];
+  }
+
+  if (name && (name.includes("and") || name.includes("&"))) {
+    const names = name.split(/ and | & /);
+    const people = names.map(fullName => {
+      const nameParts = fullName.trim().split(' ');
+      const title = nameParts[0];
+      const firstName = nameParts.length > 2 ? nameParts[1] : null;
+      const lastName = nameParts[nameParts.length - 1];
+      return { "title": title, "first_name": firstName, "initial": null, "last_name": lastName };
+    });
+    return people;
+  } else if (initial || initial === "" || first_name) {
+    if (first_name && first_name.length <= 2) {
+      initial = first_name;
+      first_name = null;
+    }
+    return { "title": title, "first_name": first_name, "initial": initial, "last_name": last_name };
+  } else {
+    return null;
+  }
+}
+
+const people = [];
+
+fs.createReadStream('./examples__284_29.csv')
+  .pipe(csv())
+  .on('data', row => {
+    const name = row['homeowner'];
+    const person = parsePersonName(name);
+    if (person) people.push(person);
+  })
+  .on('end', () => {
+    console.log(people);
+  });
