@@ -73,10 +73,8 @@ function parsePersonName(name) {
     return null;
   }
 }
-
 // Create an empty array to store the people whose names are parsed from the CSV file.
 const people = [];
-
 // Read the CSV file and parse each row's "homeowner" column using the parsePersonName function.
 fs.createReadStream('./examples__284_29.csv')
   .pipe(csv())
